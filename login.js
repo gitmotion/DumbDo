@@ -128,6 +128,21 @@ function setupPinInputListeners() {
                 e.preventDefault();
             }
         });
+
+        input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData('text/plain');
+            if (text != null && text.length > 0 && /^\d+$/.test(text)) {
+                for (let i = index; i < Math.min(text.length, pinInputs.length); i++) {
+                    pinInputs[i].value = text[i];
+                    pinInputs[i].focus();
+                }
+                const pin = pinInputs.map(input => input.value).join('');
+                if (pin.length === pinInputs.length) {
+                    verifyPin(pin);
+                }
+            }
+        })
     });
 }
 
