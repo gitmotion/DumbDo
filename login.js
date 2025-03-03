@@ -133,8 +133,8 @@ function setupPinInputListeners() {
             e.preventDefault();
             const text = e.clipboardData.getData('text/plain');
             if (text != null && text.length > 0 && /^\d+$/.test(text)) {
-                for (let i = index; i < Math.min(text.length, pinInputs.length); i++) {
-                    pinInputs[i].value = text[i];
+                for (let i = index; i < Math.min(index + text.length, pinInputs.length); i++) {
+                    pinInputs[i].value = text[i - index];
                     pinInputs[i].focus();
                 }
                 const pin = pinInputs.map(input => input.value).join('');
