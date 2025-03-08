@@ -16,7 +16,8 @@ RUN mkdir -p data
 
 # Environment variables
 ENV PORT=3000
-ENV DUMBDO_PIN=
+# Don't set a default for DUMBDO_PIN as it will override docker-compose values
+# ENV DUMBDO_PIN=
 
 # Expose port (use the PORT env variable)
 EXPOSE ${PORT}
