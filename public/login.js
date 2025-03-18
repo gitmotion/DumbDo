@@ -47,22 +47,13 @@ async function checkPinStatus() {
 }
 
 // PIN Management
-async function setupPinInputs() {
+async function setupPinInputs(data) {
     try {
-        const response = await fetch('/api/pin-required');
-        const { required, length, locked, lockoutMinutes, attemptsLeft } = await response.json();
-        
-        // If no PIN is required, we shouldn't be on this page
-        if (!required) {
-            window.location.replace('/');
-            return;
-        }
-        
         const container = document.querySelector('.pin-input-container');
         container.innerHTML = '';
         
         // Create PIN inputs
-        for (let i = 0; i < length; i++) {
+        for (let i = 0; i < data.length; i++) {
             const input = document.createElement('input');
             input.type = 'password';
             input.maxLength = 1;
@@ -72,7 +63,7 @@ async function setupPinInputs() {
             input.setAttribute('aria-label', `PIN digit ${i + 1}`);
             container.appendChild(input);
             
-            if (locked) {
+            if (data.locked) {
                 input.disabled = true;
             }
         }
@@ -81,11 +72,11 @@ async function setupPinInputs() {
         pinInputs = [...document.querySelectorAll('.pin-input')];
         setupPinInputListeners();
         
-        if (locked) {
-            showLockout(lockoutMinutes);
+        if (data.locked) {
+            showLockout(data.lockoutMinutes);
         } else {
-            if (attemptsLeft < 5) {
-                showError('', attemptsLeft);
+            if (data.attemptsLeft < 5) {
+                showError('', data.attemptsLeft);
             }
             pinInputs[0].focus();
         }
@@ -222,18 +213,37 @@ async function verifyPin(pin) {
 // Initialize only if we need to be on this page
 async function init() {
     try {
-        const response = await fetch('/api/pin-required');
-        const { required } = await response.json();
-        
-        if (!required) {
-            window.location.replace('/');
-            return;
-        }
-        
-        // Only set up PIN inputs if we actually need them
-        await setupPinInputs();
+        await fetch('/api/pin-required')
+        .then(resp => {
+            if (resp.status === 403) throw new Error(`Forbbiden: ${resp.status}`);
+            else if (resp.status >= 400) throw new Error(resp.status);
+
+            return resp.json();
+        })
+        .then(data => {          
+            if (!data.required) {
+                window.location.replace('/');
+                return;
+            }
+            
+            // Only set up PIN inputs if we actually need them
+            setupPinInputs(data);
+        })
+        .catch(err => {
+            console.error(err);
+            const pinContainer = document.getElementById('loginForm');
+            if (pinContainer) {
+                pinContainer.style.opacity = '0.5';
+                pinContainer.style.pointerEvents = 'none';
+                const pinDescription = document.getElementById('pin-description');
+                pinDescription.textContent = '';
+            }
+            showError(err);
+        });
+
     } catch (error) {
-        showError('Failed to initialize login');
+        showError(`Failed to initialize login`);
+        console.error(error);
     }
 }
 

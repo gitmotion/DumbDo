@@ -1,20 +1,41 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 const app = express();
-const port = process.env.PORT || 3000;
+const { getCorsOptions, originValidationMiddleware } = require('./scripts/cors');
+const { convertLogoToPng } = require('./scripts/convert-logo');
+const { generatePWAManifest } = require('./scripts/pwa-manifest-generator');
 
 // Environment variables
+const PORT = process.env.PORT || 3000;
 const PIN = process.env.DUMBDO_PIN;
+const SITE_TITLE = process.env.DUMBDO_SITE_TITLE || 'DumbDo';
 const MIN_PIN_LENGTH = 4;
 const MAX_PIN_LENGTH = 10;
+const PUBLIC_DIR = path.join(__dirname, 'public');
+const ASSETS_DIR = path.join(PUBLIC_DIR, 'assets');
+
+// Generate PWA assets
+convertLogoToPng();
+generatePWAManifest(SITE_TITLE);
+
+// Trust proxy - required for secure cookies behind a reverse proxy
+app.set('trust proxy', 1);
+
+// Cors Setup
+const corsOptions = getCorsOptions();
 
 // Middleware
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
+
+// Apply origin validation to all /api routes
+app.use('/api', originValidationMiddleware);
 
 // Brute force protection
 const loginAttempts = new Map();  // Stores IP addresses and their attempt counts
@@ -143,18 +164,34 @@ app.post('/api/verify-pin', (req, res) => {
     }, delay);
 });
 
+// Get site configuration
+app.get('/api/config', (req, res) => {
+    res.json({
+        siteTitle: SITE_TITLE
+    });
+});
+
 // Serve static files that don't need PIN protection
 app.get('/login.js', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.js'));
+    res.sendFile(path.join(PUBLIC_DIR, 'login.js'));
 });
 
 app.get('/styles.css', (req, res) => {
-    res.sendFile(path.join(__dirname, 'styles.css'));
+    res.sendFile(path.join(ASSETS_DIR, 'styles.css'));
 });
 
 app.get('/favicon.svg', (req, res) => {
-    res.sendFile(path.join(__dirname, 'favicon.svg'));
+    res.sendFile(path.join(ASSETS_DIR, 'favicon.svg'));
 });
+
+// Serve the pwa/asset manifest
+app.get('/asset-manifest.json', (req, res) => {
+    // generated in pwa-manifest-generator and fetched from service-worker.js
+    res.sendFile(path.join(ASSETS_DIR, 'asset-manifest.json'));
+  });
+app.get('/manifest.json', (req, res) => {
+    res.sendFile(path.join(ASSETS_DIR, 'manifest.json'));
+  });
 
 // PIN validation helper
 function isValidPin(providedPin) {
@@ -181,8 +218,9 @@ app.use((req, res, next) => {
 });
 
 // Protected routes below
+
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 
 app.get('/login', (req, res) => {
@@ -191,11 +229,12 @@ app.get('/login', (req, res) => {
     if (isValidPin(providedPin)) {
         res.redirect('/');
     } else {
-        res.sendFile(path.join(__dirname, 'login.html'));
+        res.sendFile(path.join(PUBLIC_DIR, 'login.html'));
     }
 });
 
 // Protect all other static files
+app.use(express.static(PUBLIC_DIR));
 app.use(express.static('.'));
 
 // Data directory and file path
@@ -240,8 +279,8 @@ app.post('/api/todos', async (req, res) => {
 
 // Initialize and start server
 initDataFile().then(() => {
-    app.listen(port, () => {
-        console.log(`DumbDo server running at http://localhost:${port}`);
+    app.listen(PORT, () => {
+        console.log(`DumbDo server running at http://localhost:${PORT}`);
         console.log('PIN protection:', PIN ? 'enabled' : 'disabled');
     });
 }); 

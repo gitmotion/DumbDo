@@ -8,6 +8,10 @@ yarn-error.log
 .git
 .gitignore
 
+# Docker
+.dockerignore
+Dockerfile
+
 # IDE
 .vscode
 .idea
@@ -24,7 +28,7 @@ data/
 .env
 
 # Scripts and generated assets
-scripts/
+# scripts/ # Keep scripts so that we can generate manifest for PWA
 assets/
 *.png
 !src/assets/*.png  # Keep source PNGs if any

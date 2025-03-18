@@ -1,4 +1,5 @@
-FROM node:18-slim
+# Stage 1: Build the application
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -6,21 +7,29 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm install && \
+    npm cache clean --force
 
 # Copy application files
 COPY . .
 
-# Create data directory
+# Stage 2: Create the runtime image
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy only the necessary files from the builder stage
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/server.js ./
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/scripts ./scripts
+
+# Create data directory (if it doesn't exist)
 RUN mkdir -p data
 
-# Environment variables
-ENV PORT=3000
-# Don't set a default for DUMBDO_PIN as it will override docker-compose values
-# ENV DUMBDO_PIN=
-
-# Expose port (use the PORT env variable)
-EXPOSE ${PORT}
+# Expose port (internal port)
+EXPOSE 3000
 
 # Start the application
-CMD ["node", "server.js"] 
+CMD ["npm", "start"]
