@@ -145,7 +145,7 @@ data/
 *.log
 
 # Generated assets
-assets/
+/assets/*.png
 *.png
 !src/assets/*.png  # Keep source PNGs if any
 
@@ -160,3 +160,6 @@ assets/
 Thumbs.db
 
 Boilerplate.md
+
+# Generated PWA Files
+/public/assets/*manifest.json

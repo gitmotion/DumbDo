@@ -1,17 +1,25 @@
+const fs = require('fs');
 const sharp = require('sharp');
 const path = require('path');
+const ASSETS_DIR = path.join(__dirname, "..", "public", "assets");
 
 // Sizes for different use cases
-const sizes = [16, 32, 48, 64, 128, 256];
+const sizes = [16, 32, 48, 64, 128, 192, 256, 512];
 
-async function convertToPng() {
-    const inputFile = path.join(__dirname, '..', 'favicon.svg');
+async function convertLogoToPng() {
+    console.log("Generating logo files...");
+    // Create assets directory if it doesn't exist
+    if (!fs.existsSync(ASSETS_DIR)) {
+        fs.mkdirSync(ASSETS_DIR);
+    }
+
+    const inputFile = path.join(ASSETS_DIR, 'favicon.svg');
     
     for (const size of sizes) {
         await sharp(inputFile)
             .resize(size, size)
             .png()
-            .toFile(path.join(__dirname, '..', 'assets', `logo-${size}.png`));
+            .toFile(path.join(ASSETS_DIR, `logo-${size}.png`));
         
         console.log(`Created ${size}x${size} PNG`);
     }
@@ -20,16 +28,9 @@ async function convertToPng() {
     await sharp(inputFile)
         .resize(32, 32)
         .png()
-        .toFile(path.join(__dirname, '..', 'assets', 'favicon.png'));
+        .toFile(path.join(ASSETS_DIR, 'favicon.png'));
     
     console.log('Conversion complete!');
 }
 
-// Create assets directory if it doesn't exist
-const fs = require('fs');
-const assetsDir = path.join(__dirname, '..', 'assets');
-if (!fs.existsSync(assetsDir)) {
-    fs.mkdirSync(assetsDir);
-}
-
-convertToPng().catch(console.error); 
+module.exports = { convertLogoToPng };

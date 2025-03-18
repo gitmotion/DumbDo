@@ -13,6 +13,7 @@ A stupidly simple todo list application that just works. No complex database, no
 - 📱 Fully responsive design
 - 🚀 Fast and lightweight
 - 🔒 PIN protection (4-10 digits if enabled)
+- 🌐 PWA Support
 
 ## Environment Variables
 
@@ -57,6 +58,30 @@ docker build -t dumbwareio/dumbdo .
 docker run -p 3000:3000 -v $(pwd)/data:/app/data dumbwareio/dumbdo
 ```
 
+3. Docker Compose
+```yaml
+services:
+  dumbdo:
+    image: dumbwareio/dumbdo:latest
+    container_name: dumbdo
+    restart: unless-stopped
+    ports:
+      - ${DUMBDO_PORT:-3000}:3000
+    volumes:
+      - ${DUMBDO_DATA_PATH:-./data}:/app/data
+    environment:
+      - DUMBDO_PIN=${DUMBDO_PIN-}
+      - DUMBDO_SITE_TITLE=DumbDo
+      # (Optional) Restrict origins - ex: https://subdomain.domain.tld,https://auth.proxy.tld,http://internalip:port' (default is '*')
+      # - ALLOWED_ORIGINS=http://localhost:3000
+      # - NODE_ENV=development # default production (development allows all origins)
+    #healthcheck:
+    #  test: wget --spider -q  http://127.0.0.1:3000
+    #  start_period: 20s
+    #  interval: 20s
+    #  timeout: 5s
+    #  retries: 3
+```
 ## Storage
 
 Todos are stored in a JSON file at `app/data/todos.json`. The file is automatically created when you first run the application. 
