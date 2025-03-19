@@ -250,7 +250,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Enhanced fetch with auth headers
     async function fetchWithAuth(url, options = {}) {
-        return fetch(url, options);
+        options.credentials = 'same-origin';
+        try {
+            return fetch(url, options); 
+        } 
+        catch (error) {
+            console.log(error);
+            toastManager.show(error, "error");
+        }
     }
 
     // Theme Management

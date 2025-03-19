@@ -188,10 +188,10 @@ app.get('/favicon.svg', (req, res) => {
 app.get('/asset-manifest.json', (req, res) => {
     // generated in pwa-manifest-generator and fetched from service-worker.js
     res.sendFile(path.join(ASSETS_DIR, 'asset-manifest.json'));
-  });
+});
 app.get('/manifest.json', (req, res) => {
     res.sendFile(path.join(ASSETS_DIR, 'manifest.json'));
-  });
+});
 
 // PIN validation helper
 function isValidPin(providedPin) {
