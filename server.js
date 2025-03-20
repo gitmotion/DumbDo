@@ -19,10 +19,6 @@ const MAX_PIN_LENGTH = 10;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const ASSETS_DIR = path.join(PUBLIC_DIR, 'assets');
 
-// Generate PWA assets
-convertLogoToPng();
-generatePWAManifest(SITE_TITLE);
-
 // Trust proxy - required for secure cookies behind a reverse proxy
 app.set('trust proxy', 1);
 
@@ -36,6 +32,10 @@ app.use(cookieParser());
 
 // Apply origin validation to all /api routes
 app.use('/api', originValidationMiddleware);
+
+// Generate PWA assets
+convertLogoToPng();
+generatePWAManifest(SITE_TITLE);
 
 // Brute force protection
 const loginAttempts = new Map();  // Stores IP addresses and their attempt counts
